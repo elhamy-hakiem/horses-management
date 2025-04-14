@@ -1,52 +1,50 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getHorseById } from '../services/api' // Import the function to fetch horse details
-import Loader from '../components/Loader' // Import the Loader component
-import Header from '../components/Header' // Import Header component
-import defaultImage from '../assets/noImage.jpg' // Default image when URL fails
+import { getHorseById } from '../services/api'
+import Loader from '../components/Loader'
+import Header from '../components/Header'
+import defaultImage from '../assets/defaultImage.png'
 import { toast } from 'react-toastify'
 
 const HorseDetailsPage = () => {
-  const { id } = useParams() // Extract horse ID from the URL params
-  const [horse, setHorse] = useState(null) // State to store horse details
-  const [loading, setLoading] = useState(true) // State to track loading state
-  const [newHorseImage, setNewHorseImage] = useState(null) // State for new horse image preview
-  const navigate = useNavigate() // Initialize navigate for redirection
+  const { id } = useParams()
+  const [horse, setHorse] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [newHorseImage, setNewHorseImage] = useState(null)
+  const navigate = useNavigate()
 
-  // Fetch horse details when component mounts or when the ID changes
   useEffect(() => {
     const fetchHorseDetails = async () => {
       try {
-        const data = await getHorseById(id) // Fetch horse details using the ID
+        const data = await getHorseById(id)
         if (data.horse) {
-          setHorse(data.horse) // Set the fetched horse details in state
+          setHorse(data.horse)
         } else {
-          toast.error('Horse not found, redirecting to Horses list...') // Show error message
-          navigate('/horses') // Redirect immediately to Horses page
+          toast.error('Horse not found, redirecting to Horses list...')
+          navigate('/horses')
         }
-        setLoading(false) // Stop loading once data is fetched
       } catch (error) {
-        setLoading(false) // Stop loading on error
+        toast.error('Failed to fetch horse details')
+      } finally {
+        setLoading(false)
       }
     }
+
     fetchHorseDetails()
   }, [id, navigate])
 
-  // Handle image upload and preview
   const handleHorseImageChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // Check if the file is an image
       const validImageTypes = ['image/jpeg', 'image/png', 'image/jpg']
       if (validImageTypes.includes(file.type)) {
-        setNewHorseImage(URL.createObjectURL(file)) // Set preview URL for new image
+        setNewHorseImage(URL.createObjectURL(file))
       } else {
-        toast.error('Please upload a valid image file (jpeg, png, or jpg).') // Show error if file is not a valid image
+        toast.error('Please upload a valid image file (jpeg, png, or jpg).')
       }
     }
   }
 
-  // Show Loader component while loading data
   if (loading) {
     return (
       <div className='absolute inset-0 dark:bg-black bg-white flex justify-center items-center z-50'>
@@ -55,102 +53,188 @@ const HorseDetailsPage = () => {
     )
   }
 
+  const getValue = (value) => value ?? 'N/A'
+
   return (
     <>
-      {/* Global Header component */}
       <Header />
-      <div className='min-h-screen bg-gray-100 dark:bg-black text-black dark:text-white dark:p-4 px-4 flex justify-center items-center'>
-        {/* Card container for horse details */}
-        <div className='w-full lg:w-3/4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6'>
-          {/* Card Header */}
-          <div className='text-center mb-6'>
-            <h1 className='text-3xl font-bold dark:text-white'>Horse Details For {horse.name}</h1>
-          </div>
-
-          <div className='flex flex-col lg:flex-row gap-4'>
-            {/* Left Side: Horse Image and Upload */}
-            <div className='w-full lg:w-1/3'>
+      <div className='min-h-screen px-6 py-8 bg-gray-100 dark:bg-black text-black dark:text-white'>
+        <div className='max-w-6xl mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6'>
+          <div className='grid md:grid-cols-2 gap-6'>
+            {/* Left: Main Image & Upload */}
+            <div>
               <img
                 src={newHorseImage || horse.image || defaultImage}
                 alt={horse.name}
-                className='w-full h-64 object-fill rounded-lg shadow-lg'
-                onError={(e) => {
-                  e.target.src = defaultImage
-                }}
+                className='w-full max-h-90 object-cover object-center rounded-lg shadow-lg'
+                onError={(e) => (e.target.src = defaultImage)}
               />
-              {/* Image Upload Input */}
-              <label className='block mt-4 cursor-pointer bg-gray-600 dark:bg-gray-400 hover:bg-gray-700 dark:hover:bg-gray-500 text-white font-bold py-2 px-4 rounded'>
-                Choose File
+              <label className='block mt-4 cursor-pointer bg-gray-700 dark:bg-gray-300 hover:bg-gray-600 dark:hover:bg-gray-400 text-white dark:text-black font-semibold py-2 px-4 rounded text-center'>
+                Choose Image
                 <input
                   type='file'
                   accept='image/*'
                   onChange={handleHorseImageChange}
-                  className='hidden' // Hide the default file input
+                  className='hidden'
                 />
               </label>
               {newHorseImage && (
                 <div className='mt-2 text-sm text-gray-600 dark:text-gray-300'>
-                  Preview of the new image:
+                  Preview:
                   <img
                     src={newHorseImage}
-                    alt='New Horse Image Preview'
+                    alt='New Preview'
                     className='mt-2 w-24 h-24 object-cover rounded-lg shadow-md'
                   />
                 </div>
               )}
             </div>
 
-            {/* Right Side: Horse Details */}
-            <div className='w-full lg:w-2/3'>
-              <div className='bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6'>
-                <h2 className='text-2xl font-bold mb-4 dark:text-white'>{horse.name}</h2>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Horse Number:</span> {horse.horse_number}
+            {/* Right: Basic Info */}
+            <div className='space-y-4'>
+              <h1 className='text-3xl font-bold flex items-center gap-2'>
+                🐴 {getValue(horse.name)}
+              </h1>
+
+              <div className='space-y-2'>
+                <p>
+                  <strong>Horse Number:</strong> {getValue(horse.horse_number)}
                 </p>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Mother:</span> {horse.mother_name}
+                <p>
+                  <strong>Gender:</strong> {getValue(horse.gender?.name_en)}
                 </p>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Father:</span> {horse.father_name}
+                <p>
+                  <strong>Breed:</strong> {getValue(horse.breed)}
                 </p>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Breed:</span> {horse.breed}
+                <p>
+                  <strong>Country Origin:</strong> {getValue(horse.country_origin)}
                 </p>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Date of Birth:</span> {horse.date_of_birth}
+                <p>
+                  <strong>Date Of Birth:</strong> {getValue(horse.date_of_birth)}
                 </p>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Country of Origin:</span>{' '}
-                  {horse.country_origin || 'N/A'}
-                </p>
-                <p className='text-sm text-gray-600 dark:text-gray-300'>
-                  <span className='font-bold'>Paternity Certificate:</span>{' '}
+                <p>
+                  <strong>Paternity Certificate:</strong>
                   <a
-                    href={horse.paternity_certificate}
+                    href={horse.paternity_certificate || '#'}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='underline hover:text-blue-500'
+                    className='underline text-blue-500 ml-1'
                   >
-                    View Certificate
+                    View
                   </a>
                 </p>
-                <div className='text-sm text-gray-600 dark:text-gray-300 mt-2'>
-                  <p className='font-bold'>Services:</p>
-                  {horse.services.length ? (
-                    horse.services.map((service) => (
-                      <span key={service.id} className='block'>
-                        {service.name || 'No service name'} - {service.price} USD
-                      </span>
-                    ))
-                  ) : (
-                    <span>No services available</span>
-                  )}
-                </div>
-                <p className='text-sm text-gray-600 dark:text-gray-300 mt-2'>
-                  <span className='font-bold'>Place:</span>{' '}
-                  {horse.place ? horse.place.number : 'N/A'}
-                </p>
               </div>
+              {/* Family Details */}
+              <div>
+                <h2 className='font-bold mb-2'>Family Details</h2>
+                <ul className='list-disc list-inside space-y-1'>
+                  <li>Father: {getValue(horse.father_name)}</li>
+                  <li>Mother: {getValue(horse.mother_name)}</li>
+                </ul>
+              </div>
+
+              {/* User Info */}
+              <div>
+                <h2 className='font-bold mb-2'>User</h2>
+                <ul className='list-disc list-inside space-y-1'>
+                  <li>
+                    Name:{' '}
+                    {horse.user
+                      ? `${getValue(horse.user.first_name)} ${getValue(horse.user.last_name)}`
+                      : 'N/A'}
+                  </li>
+                  <li>Email: {getValue(horse.user?.email)}</li>
+                  <li>Phone: {getValue(horse.user?.phone)}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Lower Section */}
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 text-sm'>
+            {/* First Row: Services, Return Policy, Injuries */}
+            <div>
+              <h2 className='font-bold mb-2'>Services</h2>
+              {horse.services.length ? (
+                horse.services.map((service, i) => (
+                  <ul key={i} className='list-disc list-inside mb-2'>
+                    <li>Name: {getValue(service.name)}</li>
+                    <li>Price: {getValue(service.price)}</li>
+                    <li>Payment: {getValue(service.payment?.status)}</li>
+                  </ul>
+                ))
+              ) : (
+                <p>No services</p>
+              )}
+            </div>
+
+            <div>
+              <h2 className='font-bold mb-2'>Return Policy</h2>
+              <ul className='list-disc list-inside space-y-1'>
+                <li>Training: {horse.training_horse ? 'Yes' : 'No'}</li>
+                <li>
+                  Place: {getValue(horse.place?.number)} - {getValue(horse.place?.category?.name)}
+                </li>
+                <li>Injuries Count: {horse.injuries.length || 'None'}</li>
+              </ul>
+            </div>
+
+            <div>
+              <h2 className='font-bold mb-2'>Injuries</h2>
+              {horse.injuries?.length ? (
+                <ul className='list-disc list-inside space-y-1'>
+                  {horse.injuries.map((injury, i) => (
+                    <li key={i}>{getValue(injury)}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No injuries</p>
+              )}
+            </div>
+          </div>
+
+          {/* Second Row: Packages, Registers, Extra Info */}
+          <div className='grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 text-sm'>
+            <div>
+              <h2 className='font-bold mb-2'>Packages</h2>
+              {horse.packages?.length ? (
+                horse.packages.map((pkg, i) => (
+                  <ul key={i} className='list-disc list-inside mb-2'>
+                    <li>Category: {getValue(pkg.service_category?.name_en)}</li>
+                    <li>Period: {getValue(pkg.period)}</li>
+                    <li>Price: {getValue(pkg.price)}</li>
+                    <li>Payment: {getValue(pkg.payment?.status)}</li>
+                  </ul>
+                ))
+              ) : (
+                <p>No packages</p>
+              )}
+            </div>
+
+            <div>
+              <h2 className='font-bold mb-2'>Registers</h2>
+              {horse.registers?.length ? (
+                horse.registers.map((reg, i) => (
+                  <ul key={i} className='list-disc list-inside mb-2'>
+                    <li>{getValue(reg)}</li>
+                  </ul>
+                ))
+              ) : (
+                <p>No registers</p>
+              )}
+            </div>
+
+            <div>
+              <h2 className='font-bold mb-2'>More Info</h2>
+              <ul className='list-disc list-inside space-y-1'>
+                <li>Other Registers: {getValue(horse.other_registers)}</li>
+                <li>Other Injuries: {getValue(horse.other_injuries)}</li>
+                <li>Production Place: {getValue(horse.production_place)}</li>
+                <li>Is Out: {horse.is_out ? 'Yes' : 'No'}</li>
+                <li>Out Reason: {getValue(horse.out_reason)}</li>
+                <li>Out Time: {getValue(horse.out_time)}</li>
+                <li>Created At: {getValue(horse.created_at)}</li>
+              </ul>
             </div>
           </div>
         </div>
